@@ -7,9 +7,11 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '../api.js';
+import { useWallet } from '../wallet.js';
 
 export default function Layout({ title, year, month, back, actions, onAdd, tab, children }) {
   const nav = useNavigate();
+  const { wallets, current, select } = useWallet();
   const [years, setYears] = useState([year]);
   useEffect(() => { api.years().then((ys) => setYears(ys.includes(year) ? ys : [year, ...ys])).catch(() => {}); }, [year]);
   const thisMonth = month || new Date().getMonth() + 1;
@@ -20,6 +22,11 @@ export default function Layout({ title, year, month, back, actions, onAdd, tab, 
           {back && <IconButton edge="start" color="inherit" onClick={() => nav(back)} sx={{ mr: 1 }}><ArrowBackIcon /></IconButton>}
           <Typography variant="h6" sx={{ flexGrow: 1 }} noWrap>{title}</Typography>
           {actions}
+          <Select size="small" value={current.id} variant="standard" disableUnderline aria-label="Wallet"
+            onChange={(e) => select(e.target.value)}
+            sx={{ color: 'inherit', ml: 1, maxWidth: 120, '& .MuiSvgIcon-root': { color: 'inherit' } }}>
+            {wallets.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
+          </Select>
           <Select size="small" value={year} variant="standard" disableUnderline
             onChange={(e) => nav(month ? `/${e.target.value}/${month}` : `/${e.target.value}`)}
             sx={{ color: 'inherit', ml: 1, '& .MuiSvgIcon-root': { color: 'inherit' } }}>

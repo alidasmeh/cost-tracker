@@ -20,7 +20,7 @@ npm run emulators        # terminal 1, keep open
 npm run dev              # terminal 2 → http://localhost:5173
 ```
 Sign in → in the emulator popup "Add new account" with **alidasmeh@gmail.com**
-(the rules only allow that email). Then load the Excel:
+(the rules only allow that email). Then load the Excel (it goes into your Home wallet):
 ```bash
 npm run import:local -- "../../Costs - 2026.xlsx" alidasmeh@gmail.com
 ```
@@ -42,6 +42,13 @@ cd tools
 GOOGLE_APPLICATION_CREDENTIALS=service-account.json npm run import -- "../../Costs - 2026.xlsx" alidasmeh@gmail.com
 ```
 Re-running replaces that year only.
+
+## Wallets
+Every person gets a **Home** wallet on first sign-in; existing data is copied into it automatically
+(the old copy under `users/{uid}` is left untouched and read-only). More wallets (Job, …) are created on
+the **Account** tab. Each wallet has a unique 6-character code and its own expenses, categories and
+monthly setup. Share the code and the other person can **Join with code**. Their email must be in the
+allow-list in `firestore.rules` first. Switch wallets from the picker in the top bar.
 
 ## Concepts (from the Excel)
 - **Monthly total** = expenses + subscriptions & insurance (set per month via the ⚙ icon, with income, prediction, daily budget).

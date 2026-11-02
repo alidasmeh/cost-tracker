@@ -4,7 +4,8 @@
 //   GOOGLE_APPLICATION_CREDENTIALS=service-account.json npm run import -- "../../Costs - 2026.xlsx" you@example.com [year]
 //   Local emulators instead: from the app folder, npm run import:local -- "../../Costs - 2026.xlsx" you@example.com
 //
-// Sign in to the app once first so the user exists. Re-running replaces that year's data only.
+// Sign in to the app once first so the user and their Home wallet exist; the data goes into Home.
+// Re-running replaces that year's data only.
 import XLSX from 'xlsx';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,12 +15,12 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 initializeApp();
 const db = getFirestore();
-const userRef = (uid) => db.collection('users').doc(uid);
-const expensesCol = (uid) => userRef(uid).collection('expenses');
-const monthsCol = (uid) => userRef(uid).collection('months');
+const walletRef = (code) => db.collection('wallets').doc(code);
+const expensesCol = (code) => walletRef(code).collection('expenses');
+const monthsCol = (code) => walletRef(code).collection('months');
 const monthKey = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
 const DEFAULT_CATEGORIES = ['food', 'groceries', 'snack', 'necessities', 'for home', 'clothes', 'health', 'transportation', 'travel', 'gym', 'others'];
-const getCategories = async (uid) => (await userRef(uid).get()).data()?.categories || DEFAULT_CATEGORIES;
+const getCategories = async (code) => (await walletRef(code).get()).data()?.categories || DEFAULT_CATEGORIES;
 
 const [file, email, yearArg] = process.argv.slice(2);
 if (!file || !email || !fs.existsSync(file)) { console.error('Usage: npm run import -- <file.xlsx> <email> [year]'); process.exit(1); }
@@ -34,11 +35,13 @@ const num = (v) => {
 };
 
 const uid = (await getAuth().getUserByEmail(email)).uid;
+const wallet = (await db.collection('users').doc(uid).get()).data()?.homeWallet;
+if (!wallet) { console.error(`${email} has no Home wallet yet: sign in to the app once, then re-run.`); process.exit(1); }
 const wb = XLSX.read(fs.readFileSync(file));
 
 // Collect
 const expenses = [];
-const categories = new Set(await getCategories(uid));
+const categories = new Set(await getCategories(wallet));
 for (const name of wb.SheetNames) {
   const month = monthOf(name);
   if (!month || /template/i.test(name)) continue;
@@ -64,9 +67,9 @@ if (wb.Sheets.Summary) {
 
 // Write (BulkWriter batches & retries)
 const w = db.bulkWriter();
-for (const d of (await expensesCol(uid).where('year', '==', year).get()).docs) w.delete(d.ref);
-for (const k of Object.keys(months)) w.set(monthsCol(uid).doc(k), months[k]);
-for (const e of expenses) w.create(expensesCol(uid).doc(), e);
-w.set(userRef(uid), { categories: [...categories], years: FieldValue.arrayUnion(year) }, { merge: true });
+for (const d of (await expensesCol(wallet).where('year', '==', year).get()).docs) w.delete(d.ref);
+for (const k of Object.keys(months)) w.set(monthsCol(wallet).doc(k), months[k]);
+for (const e of expenses) w.create(expensesCol(wallet).doc(), e);
+w.update(walletRef(wallet), { categories: [...categories], years: FieldValue.arrayUnion(year) });
 await w.close();
-console.log(`Imported ${expenses.length} expenses and ${Object.keys(months).length} months for ${year} → ${email}`);
+console.log(`Imported ${expenses.length} expenses and ${Object.keys(months).length} months for ${year} → ${email}'s Home wallet (${wallet})`);
