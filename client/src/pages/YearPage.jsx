@@ -41,11 +41,11 @@ export default function YearPage() {
 
           <Typography variant="subtitle1" fontWeight={600}>Months</Typography>
           <TableContainer component={Card}>
-            <Table size="small">
+            <Table size="small" sx={{ '& th, & td': { px: { xs: 1, sm: 2 }, whiteSpace: 'nowrap' } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Month</TableCell>
-                  <TableCell align="right">Items</TableCell>
+                  <TableCell align="right">Income</TableCell>
                   <TableCell align="right">Cost</TableCell>
                   <TableCell align="right">Remained</TableCell>
                 </TableRow>
@@ -65,7 +65,7 @@ export default function YearPage() {
                         };
                       }}>
                       <TableCell sx={{ fontWeight: 600 }}>{MONTHS[m.month - 1]}</TableCell>
-                      <TableCell align="right" sx={{ color: 'text.secondary' }}>{m.count}</TableCell>
+                      <TableCell align="right" sx={{ color: 'text.secondary' }}>{m.meta.income > 0 ? eur(m.meta.income) : ''}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>{eur(m.total)}</TableCell>
                       <TableCell align="right" sx={{ color: m.remained < 0 ? 'error.main' : 'success.main' }}>
                         {m.meta.income > 0 ? `${m.remained >= 0 ? '+' : ''}${eur(m.remained)}` : ''}
