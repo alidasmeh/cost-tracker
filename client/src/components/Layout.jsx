@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, IconButton, Box, Container, Select, MenuItem, BottomNavigation, BottomNavigationAction, Paper, Fab } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Box, Container, Select, MenuItem, BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DateRangeIcon from '@mui/icons-material/DateRange';
-import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '../api.js';
-import { logOut } from '../firebase.js';
 
-export default function Layout({ title, year, month, back, actions, onAdd, children }) {
+export default function Layout({ title, year, month, back, actions, onAdd, tab, children }) {
   const nav = useNavigate();
   const [years, setYears] = useState([year]);
   useEffect(() => { api.years().then((ys) => setYears(ys.includes(year) ? ys : [year, ...ys])).catch(() => {}); }, [year]);
@@ -27,20 +26,23 @@ export default function Layout({ title, year, month, back, actions, onAdd, child
             {years.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
             <MenuItem value={Math.max(...years) + 1}>{Math.max(...years) + 1}</MenuItem>
           </Select>
-          <IconButton color="inherit" onClick={logOut} aria-label="Sign out" edge="end" sx={{ ml: 0.5 }}><LogoutIcon /></IconButton>
         </Toolbar>
       </AppBar>
       <Container maxWidth="md" sx={{ py: 2 }}>{children}</Container>
       <Paper elevation={3} sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, pb: 'env(safe-area-inset-bottom)', zIndex: 10 }}>
-        <BottomNavigation showLabels value={month ? 1 : 0}
-          onChange={(_, v) => nav(v === 0 ? `/${year}` : `/${year}/${thisMonth}`)}>
-          <BottomNavigationAction label="Year" icon={<DateRangeIcon />} />
-          <BottomNavigationAction label="Month" icon={<CalendarMonthIcon />} />
+        <BottomNavigation showLabels value={tab || (month ? 'month' : 'year')}
+          onChange={(_, v) => {
+            // Without a month page to handle it, open the add dialog on the current month
+            if (v === 'add') return onAdd ? onAdd() : nav(`/${year}/${thisMonth}?add=1`);
+            nav({ year: `/${year}`, month: `/${year}/${thisMonth}`, account: '/account' }[v]);
+          }}>
+          <BottomNavigationAction value="year" label="Year" icon={<DateRangeIcon />} />
+          <BottomNavigationAction value="month" label="Month" icon={<CalendarMonthIcon />} />
+          <BottomNavigationAction value="account" label="Account" icon={<PersonIcon />} />
+          <BottomNavigationAction value="add" aria-label="Add expense" icon={
+            <Box sx={{ width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
+              bgcolor: 'secondary.main', color: 'secondary.contrastText', boxShadow: 3 }}><AddIcon /></Box>} />
         </BottomNavigation>
-        {/* Without a month page to handle it, open the add dialog on the current month */}
-        <Fab color="secondary" size="medium" aria-label="Add expense"
-          onClick={() => (onAdd ? onAdd() : nav(`/${year}/${thisMonth}?add=1`))}
-          sx={{ position: 'absolute', top: 4, left: '50%', transform: 'translateX(-50%)' }}><AddIcon /></Fab>
       </Paper>
     </Box>
   );

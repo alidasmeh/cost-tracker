@@ -6,6 +6,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { auth, signIn, useEmulators } from './firebase.js';
 import YearPage from './pages/YearPage.jsx';
 import MonthPage from './pages/MonthPage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
 
 function Login() {
   const [err, setErr] = useState('');
@@ -30,6 +31,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to={`/${now.getFullYear()}/${now.getMonth() + 1}`} replace />} />
+      <Route path="/account" element={<AccountPage />} />
       <Route path="/:year" element={<YearPage />} />
       <Route path="/:year/:month" element={<MonthPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
