@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Box, Button, CircularProgress, Typography, Alert } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
-import { auth, signIn, useEmulators } from './firebase.js';
+import { auth, signIn, logOut, useEmulators } from './firebase.js';
 import YearPage from './pages/YearPage.jsx';
 import MonthPage from './pages/MonthPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
@@ -36,7 +36,10 @@ function Wallets({ children }) {
   const [data, setData] = useState(null); // { wallets, defaultId }
   const [current, setCurrent] = useState(null);
   const [error, setError] = useState('');
-  const reload = useCallback(() => api.wallets().then(setData).catch((e) => setError(e.message)), []);
+  const reload = useCallback(() => api.wallets().then(setData).catch((e) => setError(
+    e.code === 'permission-denied'
+      ? `${auth.currentUser?.email || 'This account'} couldn't load its wallets. Sign out and sign in again.`
+      : e.message)), []);
   useEffect(() => { reload(); }, [reload]);
 
   const wallets = data?.wallets;
@@ -48,7 +51,12 @@ function Wallets({ children }) {
     setDefault: async (id) => { await api.setDefaultWallet(id); await reload(); },
   }), [wallets, active, data, reload]);
 
-  if (error) return <Box sx={{ p: 3 }}><Alert severity="error">{error}</Alert></Box>;
+  if (error) return (
+    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 480, mx: 'auto' }}>
+      <Alert severity="error">{error}</Alert>
+      <Button variant="outlined" onClick={logOut}>Sign out</Button>
+    </Box>
+  );
   if (!active) return <Loading text="Loading wallets…" />;
   return <WalletContext.Provider value={value}>{children(active)}</WalletContext.Provider>;
 }

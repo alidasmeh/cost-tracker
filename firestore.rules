@@ -3,11 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Who may use the app at all. Add someone's email here before they can join a shared wallet.
-    function allowed() {
-      return request.auth != null
-        && request.auth.token.email in ['alidasmeh@gmail.com'];
-    }
+    // Anyone signed in may use the app; what they can see is limited to their own wallets below.
+    function allowed() { return request.auth != null; }
     function owner(uid) { return allowed() && request.auth.uid == uid; }
 
     function validExpense(d) {
