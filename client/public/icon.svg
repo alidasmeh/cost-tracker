@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed background; artwork stays inside the central 80% so Android masks never clip it -->
+  <rect width="512" height="512" fill="#3f51b5"/>
+  <!-- coin with a euro sign, dropping into the wallet -->
+  <circle cx="296" cy="146" r="64" fill="#e91e63"/>
+  <path d="M325 116 A40 40 0 1 0 325 176" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/>
+  <path d="M262 137 H306 M262 157 H300" stroke="#fff" stroke-width="12" stroke-linecap="round"/>
+  <!-- wallet body -->
+  <rect x="120" y="204" width="272" height="176" rx="30" fill="#ffffff"/>
+  <rect x="120" y="204" width="272" height="38" rx="19" fill="#c5cae9"/>
+  <!-- clasp -->
+  <rect x="318" y="268" width="92" height="64" rx="22" fill="#e91e63"/>
+  <circle cx="352" cy="300" r="11" fill="#ffffff"/>
+</svg>

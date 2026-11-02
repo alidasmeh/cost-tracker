@@ -15,3 +15,8 @@ function Root() {
   return <ThemeProvider theme={theme}><CssBaseline /><ErrorBoundary><BrowserRouter><App /></BrowserRouter></ErrorBoundary></ThemeProvider>;
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+
+// Only in the built app: in dev the worker would serve stale files.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
