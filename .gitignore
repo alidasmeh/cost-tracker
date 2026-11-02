@@ -1,0 +1,16 @@
+node_modules
+client/dist
+.firebase
+*-debug.log
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
+*adminsdk*.json
+service-account*.json
+
+# Personal data
+*.xlsx
+*.timestamp-*.mjs

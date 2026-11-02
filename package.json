@@ -1,0 +1,12 @@
+{
+  "name": "cost-tracker",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix tools",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-cost-tracker",
+    "import:local": "cd tools && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-cost-tracker node import-xlsx.js",
+    "dev": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "deploy": "npm run build && firebase deploy --only hosting,firestore"
+  }
+}
