@@ -31,7 +31,7 @@ export default function ExpenseDialog({ open, onClose, onSave, onDelete, expense
   return (
     <Dialog open={open} onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="xs" component="form" onSubmit={submit}>
       <DialogTitle>{expense ? 'Edit expense' : 'New expense'}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ flex: '0 1 auto' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Amount" value={f.amount ?? ''} onChange={set('amount')} required autoFocus
             inputProps={{ inputMode: 'decimal', pattern: '[0-9]+([.,][0-9]{1,2})?' }}
