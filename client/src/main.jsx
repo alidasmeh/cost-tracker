@@ -10,10 +10,17 @@ function Root() {
   const theme = useMemo(() => createTheme({
     palette: { mode: prefersDark ? 'dark' : 'light', primary: { main: '#3f51b5' }, secondary: { main: '#e91e63' } },
     shape: { borderRadius: 12 },
-    components: { MuiCard: { defaultProps: { variant: 'outlined' } } },
+    components: {
+      MuiCard: { defaultProps: { variant: 'outlined' } },
+      // No double-tap zoom on phones; pinch is blocked by the viewport meta (Android) and the gesture listener below (iOS).
+      MuiCssBaseline: { styleOverrides: { html: { touchAction: 'manipulation', WebkitTextSizeAdjust: '100%' } } },
+    },
   }), [prefersDark]);
   return <ThemeProvider theme={theme}><CssBaseline /><ErrorBoundary><BrowserRouter><App /></BrowserRouter></ErrorBoundary></ThemeProvider>;
 }
+// iOS Safari ignores user-scalable=no, so cancel its pinch gestures directly.
+for (const type of ['gesturestart', 'gesturechange']) document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+
 ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
 
 // Only in the built app: in dev the worker would serve stale files.
