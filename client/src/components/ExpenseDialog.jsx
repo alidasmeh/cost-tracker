@@ -11,6 +11,7 @@ export default function ExpenseDialog({ open, onClose, onSave, onDelete, expense
   const todayIso = isoDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
   const [f, setF] = useState({});
   const [err, setErr] = useState('');
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (open) {
       setErr('');
@@ -22,14 +23,17 @@ export default function ExpenseDialog({ open, onClose, onSave, onDelete, expense
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const submit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     const [y, m, d] = f.date.split('-').map(Number);
     const { date, ...rest } = f;
+    setSaving(true);
     try { await onSave({ ...rest, amount: String(f.amount).replace(',', '.'), year: y, month: m, day: d }); onClose(); }
     catch (x) { setErr(x.message); }
+    finally { setSaving(false); }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="xs" component="form" onSubmit={submit}>
+    <Dialog open={open} onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="xs" component="form" onSubmit={submit} disableBackdropClick={saving} disableEscapeKeyDown={saving}>
       <DialogTitle>{expense ? 'Edit expense' : 'New expense'}</DialogTitle>
       <DialogContent sx={{ flex: '0 1 auto' }}>
         <Stack spacing={2} sx={{ mt: 1 }}>
@@ -48,9 +52,9 @@ export default function ExpenseDialog({ open, onClose, onSave, onDelete, expense
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        {expense && <Button color="error" onClick={async () => { await onDelete(expense); onClose(); }} sx={{ mr: 'auto' }}>Delete</Button>}
-        <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" variant="contained">Save</Button>
+        {expense && <Button color="error" disabled={saving} onClick={async () => { await onDelete(expense); onClose(); }} sx={{ mr: 'auto' }}>Delete</Button>}
+        <Button onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button type="submit" variant="contained" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
       </DialogActions>
     </Dialog>
   );
