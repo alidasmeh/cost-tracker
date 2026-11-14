@@ -9,16 +9,18 @@ import MonthPage from './pages/MonthPage.jsx';
 import AccountPage from './pages/AccountPage.jsx';
 import { api, setWallet } from './api.js';
 import { WalletContext } from './wallet.js';
+import { t, useI18n } from './i18n.jsx';
 
 function Login() {
+  useI18n();
   const [err, setErr] = useState('');
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, p: 3 }}>
-      <Typography variant="h4" fontWeight={600}>Cost Tracker</Typography>
+      <Typography variant="h4" fontWeight={600}>{t('Cost Tracker')}</Typography>
       <Button variant="contained" size="large" startIcon={<GoogleIcon />} onClick={() => signIn().catch((e) => setErr(e.message))}>
-        Sign in with Google
+        {t('Sign in with Google')}
       </Button>
-      {useEmulators && <Alert severity="info">Local mode (Firebase emulators). Pick or create any test account in the popup.</Alert>}
+      {useEmulators && <Alert severity="info">{t('Local mode (Firebase emulators). Pick or create any test account in the popup.')}</Alert>}
       {err && <Alert severity="error">{err}</Alert>}
     </Box>
   );
@@ -33,13 +35,15 @@ const Loading = ({ text }) => (
 
 // The app opens on the user's default wallet; picking another one lasts until the app is reopened.
 function Wallets({ children }) {
+  const { setLang } = useI18n();
   const [data, setData] = useState(null); // { wallets, defaultId }
   const [current, setCurrent] = useState(null);
   const [error, setError] = useState('');
-  const reload = useCallback(() => api.wallets().then(setData).catch((e) => setError(
+  // The account's saved language wins over this device's, so it follows the user across devices.
+  const reload = useCallback(() => api.wallets().then((d) => { if (d.language) setLang(d.language); setData(d); }).catch((e) => setError(
     e.code === 'permission-denied'
-      ? `${auth.currentUser?.email || 'This account'} couldn't load its wallets. Sign out and sign in again.`
-      : e.message)), []);
+      ? t("{email} couldn't load its wallets. Sign out and sign in again.", { email: auth.currentUser?.email || t('This account') })
+      : e.message)), [setLang]);
   useEffect(() => { reload(); }, [reload]);
 
   const wallets = data?.wallets;
@@ -54,10 +58,10 @@ function Wallets({ children }) {
   if (error) return (
     <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 480, mx: 'auto' }}>
       <Alert severity="error">{error}</Alert>
-      <Button variant="outlined" onClick={logOut}>Sign out</Button>
+      <Button variant="outlined" onClick={logOut}>{t('Sign out')}</Button>
     </Box>
   );
-  if (!active) return <Loading text="Loading wallets…" />;
+  if (!active) return <Loading text={t('Loading wallets…')} />;
   return <WalletContext.Provider value={value}>{children(active)}</WalletContext.Provider>;
 }
 

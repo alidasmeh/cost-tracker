@@ -15,12 +15,14 @@ import CategoryIcon from '../components/CategoryIcon.jsx';
 import ExpenseDialog from '../components/ExpenseDialog.jsx';
 import MonthSettingsDialog from '../components/MonthSettingsDialog.jsx';
 import { api } from '../api.js';
-import { MONTHS, eur, catColor } from '../util.js';
+import { eur, catColor } from '../util.js';
+import { useI18n } from '../i18n.jsx';
 
 export default function MonthPage() {
   const year = Number(useParams().year);
   const month = Number(useParams().month);
   const nav = useNavigate();
+  const { t, months: MONTHS, catLabel, locale } = useI18n();
   const [params, setParams] = useSearchParams();
   const [data, setData] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -55,35 +57,35 @@ export default function MonthPage() {
 
   const save = async (e) => {
     if (e.id) await api.updateExpense(e.id, e); else await api.addExpense(e);
-    setToast(e.id ? 'Expense updated' : 'Expense added');
+    setToast(e.id ? t('Expense updated') : t('Expense added'));
     if (e.year !== year || e.month !== month) nav(`/${e.year}/${e.month}`); else load();
     api.categories().then(setCategories);
   };
-  const remove = async (e) => { await api.deleteExpense(e.id); setToast('Expense deleted'); load(); };
-  const weekday = (d) => new Date(year, month - 1, d).toLocaleDateString('en-GB', { weekday: 'short' });
+  const remove = async (e) => { await api.deleteExpense(e.id); setToast(t('Expense deleted')); load(); };
+  const weekday = (d) => new Date(year, month - 1, d).toLocaleDateString(locale, { weekday: 'short' });
 
   return (
     <Layout title={`${MONTHS[month - 1]} ${year}`} year={year} month={month} onAdd={() => setEditing({})}>
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <IconButton onClick={() => go(-1)} aria-label="Previous month"><ChevronLeft /></IconButton>
+        <IconButton onClick={() => go(-1)} aria-label={t('Previous month')}><ChevronLeft /></IconButton>
         <Typography variant="subtitle1" fontWeight={600}>{MONTHS[month - 1]} {year}</Typography>
-        <IconButton onClick={() => go(1)} aria-label="Next month"><ChevronRight /></IconButton>
+        <IconButton onClick={() => go(1)} aria-label={t('Next month')}><ChevronRight /></IconButton>
       </Box>
       {!data ? <LinearProgress /> : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
             <Button size="small" color="inherit" startIcon={<SettingsIcon />} onClick={() => setSettings(true)}
-              sx={{ textTransform: 'none', color: 'text.secondary' }}>Month setup</Button>
+              sx={{ textTransform: 'none', color: 'text.secondary' }}>{t('Month setup')}</Button>
           </Box>
           <TableContainer component={Card}>
             <Table size="small">
               <TableBody>
                 {[
-                  { label: 'Monthly total', value: data.total, sub: `incl. ${eur(data.meta.fixed)} subs & ins.` },
-                  { label: 'Remained from income', value: data.remained, auto: true, sub: `income ${eur(data.meta.income)}` },
-                  { label: 'vs. prediction', value: data.deviation, auto: true, sub: `plan ${eur(data.meta.prediction)}` },
+                  { label: t('Monthly total'), value: data.total, sub: t('incl. {amount} subs & ins.', { amount: eur(data.meta.fixed) }) },
+                  { label: t('Remained from income'), value: data.remained, auto: true, sub: t('income {amount}', { amount: eur(data.meta.income) }) },
+                  { label: t('vs. prediction'), value: data.deviation, auto: true, sub: t('plan {amount}', { amount: eur(data.meta.prediction) }) },
                 ].map((r) => (
                   <TableRow key={r.label} sx={{ '&:last-child td': { borderBottom: 0 } }}>
                     <TableCell sx={{ color: 'text.secondary' }}>{r.label}</TableCell>
@@ -99,36 +101,36 @@ export default function MonthPage() {
           {data.meta.note && <Alert severity="info">{data.meta.note}</Alert>}
 
           <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth">
-            <Tab label={`Expenses (${data.count})`} /><Tab label="Categories" />
+            <Tab label={t('Expenses ({count})', { count: data.count })} /><Tab label={t('Categories')} />
           </Tabs>
 
           {tab === 0 && (<>
-            <TextField size="small" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)}
+            <TextField size="small" placeholder={t('Search')} value={q} onChange={(e) => setQ(e.target.value)}
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
             <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5 }}>
               {cats.map((c) => (
-                <Chip key={c} label={c} onClick={() => setCat(cat === c ? null : c)}
+                <Chip key={c} label={catLabel(c)} onClick={() => setCat(cat === c ? null : c)}
                   color={cat === c ? 'primary' : 'default'} variant={cat === c ? 'filled' : 'outlined'}
                   icon={<CategoryIcon category={c} fontSize="small" />} />
               ))}
             </Box>
             <Card>
-              {groups.length === 0 && <CardContent><Typography color="text.secondary">No expenses yet. Tap + to add one.</Typography></CardContent>}
+              {groups.length === 0 && <CardContent><Typography color="text.secondary">{t('No expenses yet. Tap + to add one.')}</Typography></CardContent>}
               <List disablePadding>
                 {groups.map((g) => (
                   <li key={g.day}>
                     <ul style={{ padding: 0 }}>
                       <ListSubheader sx={{ display: 'flex', justifyContent: 'space-between', lineHeight: '36px' }}>
-                        <span>{g.day ? `${weekday(g.day)} ${g.day}` : 'No date'}</span><span>{eur(g.sum)}</span>
+                        <span>{g.day ? `${weekday(g.day)} ${g.day}` : t('No date')}</span><span>{eur(g.sum)}</span>
                       </ListSubheader>
                       {g.list.map((e) => (
                         <ListItemButton key={e.id} onClick={() => setEditing(e)}>
                           <ListItemAvatar>
-                            <Avatar sx={{ bgcolor: catColor(e.category, cats), width: 36, height: 36 }}>
+                            <Avatar sx={{ bgcolor: catColor(e.category), width: 36, height: 36 }}>
                               <CategoryIcon category={e.category} fontSize="small" />
                             </Avatar>
                           </ListItemAvatar>
-                          <ListItemText primary={e.title} secondary={e.note ? `${e.category} · ${e.note}` : e.category}
+                          <ListItemText primary={e.title} secondary={e.note ? `${catLabel(e.category)} · ${e.note}` : catLabel(e.category)}
                             primaryTypographyProps={{ noWrap: true }} secondaryTypographyProps={{ noWrap: true }} />
                           <Typography fontWeight={600} sx={{ ml: 1, whiteSpace: 'nowrap' }}>{eur(e.amount)}</Typography>
                         </ListItemButton>
@@ -142,15 +144,15 @@ export default function MonthPage() {
 
           {tab === 1 && (
             <Card><CardContent>
-              {cats.length === 0 ? <Typography color="text.secondary">No data.</Typography> : (<>
+              {cats.length === 0 ? <Typography color="text.secondary">{t('No data.')}</Typography> : (<>
                 <PieChart height={220} slotProps={{ legend: { hidden: true } }}
                   series={[{ innerRadius: 50, paddingAngle: 1, cornerRadius: 4, valueFormatter: (v) => eur(v.value),
-                    data: cats.map((c) => ({ id: c, value: data.byCategory[c], label: c, color: catColor(c, cats) })) }]} />
+                    data: cats.map((c) => ({ id: c, value: data.byCategory[c], label: catLabel(c), color: catColor(c) })) }]} />
                 <List dense>
                   {cats.map((c) => (
                     <ListItemButton key={c} onClick={() => { setCat(c); setTab(0); }}>
-                      <ListItemAvatar><Avatar sx={{ bgcolor: catColor(c, cats), width: 32, height: 32 }}><CategoryIcon category={c} fontSize="small" /></Avatar></ListItemAvatar>
-                      <ListItemText primary={c} secondary={`${Math.round((data.byCategory[c] / data.spent) * 100)}%`} />
+                      <ListItemAvatar><Avatar sx={{ bgcolor: catColor(c), width: 32, height: 32 }}><CategoryIcon category={c} fontSize="small" /></Avatar></ListItemAvatar>
+                      <ListItemText primary={catLabel(c)} secondary={`${Math.round((data.byCategory[c] / data.spent) * 100)}%`} />
                       <Typography fontWeight={600}>{eur(data.byCategory[c])}</Typography>
                     </ListItemButton>
                   ))}

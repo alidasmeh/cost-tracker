@@ -1,5 +1,5 @@
 // Data layer: talks to Firestore directly (no backend). Same interface the pages used before.
-//   users/{uid}                     { homeWallet, homeMigrated, defaultWallet }  (+ legacy categories/years/expenses/months)
+//   users/{uid}                     { homeWallet, homeMigrated, defaultWallet, language }  (+ legacy categories/years/expenses/months)
 //   wallets/{code}                  { name, owner, members: uid[], categories: string[], years: number[], createdAt }
 //   wallets/{code}/expenses/{id}    { year, month, day, title, amount, category, note, createdAt }
 //   wallets/{code}/months/{YYYY-MM} { fixed, income, prediction, dailyBudget, note }
@@ -9,6 +9,7 @@ import {
   arrayRemove, writeBatch,
 } from 'firebase/firestore';
 import { auth, db } from './firebase.js';
+import { t } from './i18n.jsx';
 
 export const DEFAULT_CATEGORIES = ['food', 'groceries', 'snack', 'necessities', 'for home', 'clothes',
   'health', 'transportation', 'travel', 'gym', 'others'];
@@ -16,13 +17,13 @@ const DEFAULT_MONTH = { fixed: 0, income: 0, prediction: 3000, dailyBudget: 50, 
 const monthKey = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
 const round = (n) => Math.round(n * 100) / 100;
 
-const uid = () => { const u = auth.currentUser?.uid; if (!u) throw new Error('Please sign in'); return u; };
+const uid = () => { const u = auth.currentUser?.uid; if (!u) throw new Error(t('Please sign in')); return u; };
 const userDoc = () => doc(db, 'users', uid());
 
 // The wallet every call below reads and writes; App sets it after loading the user's wallets.
 let walletId = null;
 export const setWallet = (id) => { walletId = id; };
-const walletDoc = (id = walletId) => { if (!id) throw new Error('No wallet selected'); return doc(db, 'wallets', id); };
+const walletDoc = (id = walletId) => { if (!id) throw new Error(t('No wallet selected')); return doc(db, 'wallets', id); };
 const expensesCol = (id) => collection(walletDoc(id), 'expenses');
 const monthsCol = (id) => collection(walletDoc(id), 'months');
 
@@ -64,10 +65,10 @@ function clean(e) {
     category: String(e.category ?? '').trim().toLowerCase(),
     note: String(e.note ?? ''),
   };
-  if (!out.title) throw new Error('Title is required');
-  if (!Number.isFinite(out.amount)) throw new Error('Amount must be a number');
-  if (!out.category) throw new Error('Category is required');
-  if (out.day != null && !(out.day >= 1 && out.day <= 31)) throw new Error('Invalid day');
+  if (!out.title) throw new Error(t('Title is required'));
+  if (!Number.isFinite(out.amount)) throw new Error(t('Amount must be a number'));
+  if (!out.category) throw new Error(t('Category is required'));
+  if (out.day != null && !(out.day >= 1 && out.day <= 31)) throw new Error(t('Invalid day'));
   return out;
 }
 
@@ -76,7 +77,7 @@ const remember = (e) => updateDoc(walletDoc(), { categories: arrayUnion(e.catego
 async function createWallet(name, extra = {}) {
   const data = { name: String(name).trim().slice(0, 40), owner: uid(), members: [uid()],
     categories: DEFAULT_CATEGORIES, years: [], createdAt: Date.now(), ...extra };
-  if (!data.name) throw new Error('Wallet name is required');
+  if (!data.name) throw new Error(t('Wallet name is required'));
   // A taken code is someone else's wallet, which the rules refuse to overwrite: just draw another.
   for (let i = 0; i < 5; i++) {
     const code = newCode();
@@ -121,18 +122,20 @@ export const api = {
     const wallets = snap.docs.map((d) => ({ id: d.id, ...d.data(), home: d.id === home }))
       .sort((a, b) => b.home - a.home || a.createdAt - b.createdAt);
     const defaultId = wallets.some((w) => w.id === user.defaultWallet) ? user.defaultWallet : home;
-    return { wallets, defaultId };
+    return { wallets, defaultId, language: user.language };
   },
 
   setDefaultWallet: (id) => setDoc(userDoc(), { defaultWallet: id }, { merge: true }),
+
+  setLanguage: (language) => setDoc(userDoc(), { language }, { merge: true }),
 
   createWallet: (name) => createWallet(name),
 
   async joinWallet(code) {
     const id = String(code).trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(id)) throw new Error('A wallet code is 6 letters and digits');
+    if (!/^[A-Z0-9]{6}$/.test(id)) throw new Error(t('A wallet code is 6 letters and digits'));
     try { await updateDoc(doc(db, 'wallets', id), { members: arrayUnion(uid()) }); }
-    catch (e) { throw new Error(e.code === 'not-found' || e.code === 'permission-denied' ? 'No wallet with that code' : e.message); }
+    catch (e) { throw new Error(e.code === 'not-found' || e.code === 'permission-denied' ? t('No wallet with that code') : e.message); }
     return id;
   },
 

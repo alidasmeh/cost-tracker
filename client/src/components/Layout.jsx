@@ -8,9 +8,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
 import { api } from '../api.js';
 import { useWallet } from '../wallet.js';
+import { useI18n } from '../i18n.jsx';
 
 export default function Layout({ title, year, month, back, actions, onAdd, tab, children }) {
   const nav = useNavigate();
+  const { t } = useI18n();
   const { wallets, current, select } = useWallet();
   const [years, setYears] = useState([year]);
   useEffect(() => { api.years().then((ys) => setYears(ys.includes(year) ? ys : [year, ...ys])).catch(() => {}); }, [year]);
@@ -22,7 +24,7 @@ export default function Layout({ title, year, month, back, actions, onAdd, tab, 
           {back && <IconButton edge="start" color="inherit" onClick={() => nav(back)} sx={{ mr: 1 }}><ArrowBackIcon /></IconButton>}
           <Typography variant="h6" sx={{ flexGrow: 1 }} noWrap>{title}</Typography>
           {actions}
-          <Select size="small" value={current.id} variant="standard" disableUnderline aria-label="Wallet"
+          <Select size="small" value={current.id} variant="standard" disableUnderline aria-label={t('Wallet')}
             onChange={(e) => select(e.target.value)}
             sx={{ color: 'inherit', ml: 1, maxWidth: 120, '& .MuiSvgIcon-root': { color: 'inherit' } }}>
             {wallets.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
@@ -43,10 +45,10 @@ export default function Layout({ title, year, month, back, actions, onAdd, tab, 
             if (v === 'add') return onAdd ? onAdd() : nav(`/${year}/${thisMonth}?add=1`);
             nav({ year: `/${year}`, month: `/${year}/${thisMonth}`, account: '/account' }[v]);
           }}>
-          <BottomNavigationAction value="year" label="Year" icon={<DateRangeIcon />} />
-          <BottomNavigationAction value="month" label="Month" icon={<CalendarMonthIcon />} />
-          <BottomNavigationAction value="account" label="Account" icon={<PersonIcon />} />
-          <BottomNavigationAction value="add" aria-label="Add expense" icon={
+          <BottomNavigationAction value="year" label={t('Year')} icon={<DateRangeIcon />} />
+          <BottomNavigationAction value="month" label={t('Month')} icon={<CalendarMonthIcon />} />
+          <BottomNavigationAction value="account" label={t('Account')} icon={<PersonIcon />} />
+          <BottomNavigationAction value="add" aria-label={t('Add expense')} icon={
             <Box sx={{ width: 48, height: 48, borderRadius: '50%', display: 'grid', placeItems: 'center',
               bgcolor: 'secondary.main', color: 'secondary.contrastText', boxShadow: 3 }}><AddIcon /></Box>} />
         </BottomNavigation>

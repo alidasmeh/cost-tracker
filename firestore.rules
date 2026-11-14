@@ -23,12 +23,13 @@ service cloud.firestore {
         && d.note is string && d.note.size() <= 1000;
     }
 
-    // users/{uid}: { homeWallet, homeMigrated, defaultWallet }. categories/years/expenses/months are pre-wallet data,
+    // users/{uid}: { homeWallet, homeMigrated, defaultWallet, language }. categories/years/expenses/months are pre-wallet data,
     // kept read-only so the app can copy them into the Home wallet.
     match /users/{uid} {
       allow read: if owner(uid);
       allow write: if owner(uid)
-        && request.resource.data.keys().hasOnly(['categories', 'years', 'homeWallet', 'homeMigrated', 'defaultWallet']);
+        && request.resource.data.keys().hasOnly(['categories', 'years', 'homeWallet', 'homeMigrated', 'defaultWallet', 'language'])
+        && (!('language' in request.resource.data) || request.resource.data.language in ['en', 'de']);
       match /expenses/{id} { allow read: if owner(uid); }
       match /months/{key} { allow read: if owner(uid); }
     }

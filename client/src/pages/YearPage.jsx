@@ -7,11 +7,13 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import Layout from '../components/Layout.jsx';
 import StatCard from '../components/StatCard.jsx';
 import { api } from '../api.js';
-import { MONTHS, eur, catColor } from '../util.js';
+import { eur, catColor } from '../util.js';
+import { useI18n } from '../i18n.jsx';
 
 export default function YearPage() {
   const year = Number(useParams().year);
   const nav = useNavigate();
+  const { t, months: MONTHS, catLabel } = useI18n();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   useEffect(() => { setData(null); api.year(year).then(setData).catch((e) => setError(e.message)); }, [year]);
@@ -23,31 +25,31 @@ export default function YearPage() {
       {!data ? <LinearProgress /> : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Grid container spacing={1.5}>
-            <Grid item xs={6} sm={3}><StatCard label="Total cost" value={data.total} /></Grid>
-            <Grid item xs={6} sm={3}><StatCard label="Total income" value={data.income} /></Grid>
-            <Grid item xs={6} sm={3}><StatCard label="Saving" value={data.saving} tone="auto" /></Grid>
-            <Grid item xs={6} sm={3}><StatCard label="Subs & insurance" value={data.fixed} /></Grid>
+            <Grid item xs={6} sm={3}><StatCard label={t('Total cost')} value={data.total} /></Grid>
+            <Grid item xs={6} sm={3}><StatCard label={t('Total income')} value={data.income} /></Grid>
+            <Grid item xs={6} sm={3}><StatCard label={t('Saving')} value={data.saving} tone="auto" /></Grid>
+            <Grid item xs={6} sm={3}><StatCard label={t('Subs & insurance')} value={data.fixed} /></Grid>
           </Grid>
 
           <Card><CardContent>
-            <Typography variant="subtitle1" fontWeight={600}>Monthly cost vs income</Typography>
+            <Typography variant="subtitle1" fontWeight={600}>{t('Monthly cost vs income')}</Typography>
             <BarChart height={240} margin={{ left: 50, right: 10, top: 40, bottom: 25 }}
               xAxis={[{ scaleType: 'band', data: MONTHS.map((m) => m.slice(0, 3)) }]}
               series={[
-                { data: data.months.map((m) => m.total), label: 'Cost', color: '#e91e63', valueFormatter: eur },
-                { data: data.months.map((m) => m.meta.income), label: 'Income', color: '#3f51b5', valueFormatter: eur },
+                { data: data.months.map((m) => m.total), label: t('Cost'), color: '#e91e63', valueFormatter: eur },
+                { data: data.months.map((m) => m.meta.income), label: t('Income'), color: '#3f51b5', valueFormatter: eur },
               ]} />
           </CardContent></Card>
 
-          <Typography variant="subtitle1" fontWeight={600}>Months</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>{t('Months')}</Typography>
           <TableContainer component={Card}>
             <Table size="small" sx={{ '& th, & td': { px: { xs: 1, sm: 2 }, whiteSpace: 'nowrap' } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Month</TableCell>
-                  <TableCell align="right">Income</TableCell>
-                  <TableCell align="right">Cost</TableCell>
-                  <TableCell align="right">Remained</TableCell>
+                  <TableCell>{t('Month')}</TableCell>
+                  <TableCell align="right">{t('Income')}</TableCell>
+                  <TableCell align="right">{t('Cost')}</TableCell>
+                  <TableCell align="right">{t('Remained')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -79,13 +81,13 @@ export default function YearPage() {
 
           {cats.length > 0 && (
             <Card><CardContent>
-              <Typography variant="subtitle1" fontWeight={600}>By category</Typography>
+              <Typography variant="subtitle1" fontWeight={600}>{t('By category')}</Typography>
               <PieChart height={220} slotProps={{ legend: { hidden: true } }}
                 series={[{ innerRadius: 50, paddingAngle: 1, cornerRadius: 4, valueFormatter: (v) => eur(v.value),
-                  data: cats.map((c) => ({ id: c, value: data.byCategory[c], label: c, color: catColor(c, cats) })) }]} />
+                  data: cats.map((c) => ({ id: c, value: data.byCategory[c], label: catLabel(c), color: catColor(c) })) }]} />
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {cats.map((c) => <Chip key={c} size="small" label={`${c} · ${eur(data.byCategory[c])}`}
-                  sx={{ bgcolor: catColor(c, cats), color: '#fff' }} />)}
+                {cats.map((c) => <Chip key={c} size="small" label={`${catLabel(c)} · ${eur(data.byCategory[c])}`}
+                  sx={{ bgcolor: catColor(c), color: '#fff' }} />)}
               </Box>
             </CardContent></Card>
           )}
